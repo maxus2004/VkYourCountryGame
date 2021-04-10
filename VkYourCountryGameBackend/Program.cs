@@ -75,7 +75,7 @@ namespace VkYourCountryGameBackend
         {
             if (!logging) return;
             Console.CursorLeft = 0;
-            Console.WriteLine(DateTime.Now+" - "+str);
+            Console.WriteLine(DateTime.Now.ToString("dd.mm.yyyy HH:mm:ss")+" - "+str));
             Console.Write("> ");
         }
         private static void StartListening()
