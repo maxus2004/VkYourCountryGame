@@ -62,6 +62,8 @@ namespace VkYourCountryGameBackend
                                           "start logging\n" +
                                           "stop logging");
                         break;
+                    case "":
+                        break;
                     default:
                         Console.WriteLine("Unknown command, write 'help'");
                         break;
@@ -132,7 +134,7 @@ namespace VkYourCountryGameBackend
             }
             str = str.TrimEnd('&');
             string sign = Convert.ToBase64String(new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)).ComputeHash(Encoding.UTF8.GetBytes(str)));
-            return sign.TrimEnd('=').Replace('+','-').Replace('/', '_') == query["sign"];
+            return sign.TrimEnd('=').Replace('+', '-').Replace('/', '_') == query["sign"];
         }
         private static async Task SendJson(HttpListenerContext context, JObject json)
         {
