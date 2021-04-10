@@ -34,41 +34,39 @@ namespace VkYourCountryGameBackend
 
             new Thread(StartListening).Start();
 
-            new Thread(() =>
+            Thread.Sleep(1000);
+            while (!stopped)
             {
-                while (!stopped)
-                {
-                    Console.Write("> ");
-                    string cmd = Console.ReadLine();
+                Console.Write("> ");
+                string cmd = Console.ReadLine();
 
-                    switch (cmd)
-                    {
-                        case "stop":
-                        case "exit":
-                        case "quit":
-                            Console.WriteLine("stopping server...");
-                            stopped = true;
-                            httpListener.Stop();
-                            break;
-                        case "start logging":
-                            logging = true;
-                            break;
-                        case "stop logging":
-                            logging = false;
-                            break;
-                        case "help":
-                            Console.WriteLine("available commands: \n" +
-                                              "help\n" +
-                                              "stop/exit/quit\n" +
-                                              "start logging\n" +
-                                              "stop logging");
-                            break;
-                        default:
-                            Console.WriteLine("Unknown command, write 'help'");
-                            break;
-                    }
+                switch (cmd)
+                {
+                    case "stop":
+                    case "exit":
+                    case "quit":
+                        Console.WriteLine("stopping server...");
+                        stopped = true;
+                        httpListener.Stop();
+                        break;
+                    case "start logging":
+                        logging = true;
+                        break;
+                    case "stop logging":
+                        logging = false;
+                        break;
+                    case "help":
+                        Console.WriteLine("available commands: \n" +
+                                          "help\n" +
+                                          "stop/exit/quit\n" +
+                                          "start logging\n" +
+                                          "stop logging");
+                        break;
+                    default:
+                        Console.WriteLine("Unknown command, write 'help'");
+                        break;
                 }
-            }).Start();
+            }
         }
 
         private static void log(string str)
@@ -134,7 +132,12 @@ namespace VkYourCountryGameBackend
             }
             str = str.TrimEnd('&');
             string sign = Convert.ToBase64String(new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)).ComputeHash(Encoding.UTF8.GetBytes(str)));
-            return sign == query["sign"] ;
+
+            Console.WriteLine(str);
+            Console.WriteLine(sign);
+            Console.WriteLine(query["sign"]);
+
+            return sign == query["sign"];
         }
         private static async Task SendJson(HttpListenerContext context, JObject json)
         {
