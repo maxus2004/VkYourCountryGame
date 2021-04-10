@@ -17,7 +17,7 @@ namespace VkYourCountryGameBackend
     {
         private static string secretKey = "EI8EGdM3svbzs76k8HYG";
         private static bool stopped = false;
-        private static bool logging = true;
+        private static bool logging = false;
         private static HttpListener httpListener;
         private static string sqlConnectStr;
         static void Main(string[] args)
@@ -75,7 +75,7 @@ namespace VkYourCountryGameBackend
         {
             if (!logging) return;
             Console.CursorLeft = 0;
-            Console.WriteLine(str);
+            Console.WriteLine(DateTime.Now+" - "+str);
             Console.Write("> ");
         }
         private static void StartListening()
