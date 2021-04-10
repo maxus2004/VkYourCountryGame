@@ -67,7 +67,9 @@ namespace VkYourCountryGameBackend
         private static void log(string str)
         {
             if (!logging) return;
+            Console.CursorLeft = 0;
             Console.WriteLine(str);
+            Console.Write("> ");
         }
         private static void StartListening()
         {
