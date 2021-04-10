@@ -41,6 +41,7 @@ namespace VkYourCountryGameBackend
                     case "stop":
                     case "exit":
                     case "quit":
+                        Console.WriteLine("stopping server...");
                         stopped = true;
                         break;
                     case "start logging":
@@ -61,6 +62,7 @@ namespace VkYourCountryGameBackend
                         break;
                 }
             }
+
         }
 
         private static void log(string str)
@@ -93,6 +95,7 @@ namespace VkYourCountryGameBackend
                     }
                 }
             }
+            Console.WriteLine("stopped server");
         }
 
         private static async Task SendJson(HttpListenerContext context, JObject json)
