@@ -43,6 +43,7 @@ namespace VkYourCountryGameBackend
                     case "quit":
                         Console.WriteLine("stopping server...");
                         stopped = true;
+                        httpListener.Stop();
                         break;
                     case "start logging":
                         logging = true;
@@ -62,7 +63,6 @@ namespace VkYourCountryGameBackend
                         break;
                 }
             }
-
         }
 
         private static void log(string str)
