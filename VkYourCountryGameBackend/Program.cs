@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Data.Common;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +15,7 @@ namespace VkYourCountryGameBackend
 {
     class Program
     {
+        private static string secretKey = "EI8EGdM3svbzs76k8HYG";
         private static bool stopped = false;
         private static bool logging = true;
         private static HttpListener httpListener;
@@ -30,38 +34,41 @@ namespace VkYourCountryGameBackend
 
             new Thread(StartListening).Start();
 
-            while (!stopped)
+            new Thread(() =>
             {
-                Console.Write("> ");
-                string cmd = Console.ReadLine();
-
-                switch (cmd)
+                while (!stopped)
                 {
-                    case "stop":
-                    case "exit":
-                    case "quit":
-                        Console.WriteLine("stopping server...");
-                        stopped = true;
-                        httpListener.Stop();
-                        break;
-                    case "start logging":
-                        logging = true;
-                        break;
-                    case "stop logging":
-                        logging = false;
-                        break;
-                    case "help":
-                        Console.WriteLine("available commands: \n" +
-                                          "help\n" +
-                                          "stop/exit/quit\n" +
-                                          "start logging\n" +
-                                          "stop logging");
-                        break;
-                    default:
-                        Console.WriteLine("Unknown command, write 'help'");
-                        break;
+                    Console.Write("> ");
+                    string cmd = Console.ReadLine();
+
+                    switch (cmd)
+                    {
+                        case "stop":
+                        case "exit":
+                        case "quit":
+                            Console.WriteLine("stopping server...");
+                            stopped = true;
+                            httpListener.Stop();
+                            break;
+                        case "start logging":
+                            logging = true;
+                            break;
+                        case "stop logging":
+                            logging = false;
+                            break;
+                        case "help":
+                            Console.WriteLine("available commands: \n" +
+                                              "help\n" +
+                                              "stop/exit/quit\n" +
+                                              "start logging\n" +
+                                              "stop logging");
+                            break;
+                        default:
+                            Console.WriteLine("Unknown command, write 'help'");
+                            break;
+                    }
                 }
-            }
+            }).Start();
         }
 
         private static void log(string str)
@@ -95,14 +102,10 @@ namespace VkYourCountryGameBackend
                 }
                 else
                 {
-                    Console.WriteLine(context.Request.UrlReferrer.OriginalString);
                     switch (context.Request.Url.LocalPath)
                     {
                         case "/yourcountryserver/getUser":
                             Task.Run(() => ProcessGetUser(context));
-                            break;
-                        case "/yourcountryserver/setUser":
-                            Task.Run(() => ProcessSetUser(context));
                             break;
                         default:
                             Task.Run(() => Send404(context));
@@ -113,6 +116,26 @@ namespace VkYourCountryGameBackend
             Console.WriteLine("stopped server");
         }
 
+        private static bool VerifyUser(NameValueCollection query)
+        {
+            SortedDictionary<string, string> vkKeys = new SortedDictionary<string, string>();
+            foreach (string name in query.AllKeys)
+            {
+                if (name.StartsWith("vk_"))
+                {
+                    vkKeys.Add(name, query[name]);
+                }
+            }
+
+            string str = "";
+            foreach (KeyValuePair<string, string> pair in vkKeys)
+            {
+                str += pair.Key + "=" + pair.Value + "&";
+            }
+            str = str.TrimEnd('&');
+            string sign = Convert.ToBase64String(new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)).ComputeHash(Encoding.UTF8.GetBytes(str)));
+            return sign == query["sign"] ;
+        }
         private static async Task SendJson(HttpListenerContext context, JObject json)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(json.ToString());
@@ -139,23 +162,23 @@ namespace VkYourCountryGameBackend
 
         }
 
-        private static async Task ProcessSetUser(HttpListenerContext context)
-        {
-        }
-
         private static async Task ProcessGetUser(HttpListenerContext context)
         {
             try
             {
-
-                log($"hash: {JsonConvert.SerializeObject(context.Request.QueryString)}");
-                string requestStr = await new StreamReader(context.Request.InputStream, Encoding.UTF8).ReadToEndAsync();
-                JObject request = JObject.Parse(requestStr);
+                if (!VerifyUser(context.Request.QueryString))
+                {
+                    log($"unauthorized client tried to getUser for id{context.Request.QueryString["vk_user_id"]}");
+                    JObject json1 = new JObject();
+                    json1.Add("error", "Ты слишком тупой чтобы хакнуть эту игру. Иди пока делай домашку, может придумаешь способ получше");
+                    await SendJson(context, json1);
+                    return;
+                }
 
                 MySqlConnection sqlConnection = new MySqlConnection(sqlConnectStr);
                 await sqlConnection.OpenAsync();
                 DbDataReader getUserSql = await new MySqlCommand(
-                    $"SELECT * FROM user WHERE id = '{MySqlHelper.EscapeString(request["id"].ToString())}'",
+                    $"SELECT * FROM user WHERE id = '{MySqlHelper.EscapeString(context.Request.QueryString["vk_user_id"])}'",
                     sqlConnection).ExecuteReaderAsync();
                 bool found = await getUserSql.ReadAsync();
 
@@ -177,11 +200,11 @@ namespace VkYourCountryGameBackend
 
                     DbDataReader addUserSql = await new MySqlCommand(
                         "INSERT INTO user (id, money, health, hunger, happiness, owner_id, days) " +
-                        $"VALUES ('{MySqlHelper.EscapeString(request["id"].ToString())}', 0, 100, 100, 100, NULL, 0)",
+                        $"VALUES ('{MySqlHelper.EscapeString(context.Request.QueryString["vk_user_id"])}', 0, 100, 100, 100, NULL, 0)",
                         sqlConnection).ExecuteReaderAsync();
                     await addUserSql.CloseAsync();
 
-                    log("added user " + request["id"]);
+                    log("added user " + context.Request.QueryString["vk_user_id"]);
 
                     json.Add("money", 0);
                     json.Add("health", 100);
@@ -193,7 +216,7 @@ namespace VkYourCountryGameBackend
 
 
                 await SendJson(context, json);
-                log($"served getUser {request}");
+                log($"served getUser for id{context.Request.QueryString["vk_user_id"]}");
             }
             catch (Exception e)
             {
