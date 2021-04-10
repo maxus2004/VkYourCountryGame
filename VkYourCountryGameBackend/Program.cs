@@ -33,6 +33,7 @@ namespace VkYourCountryGameBackend
 
             while (!stopped)
             {
+                Console.Write("> ");
                 string cmd = Console.ReadLine();
 
                 switch (cmd)
