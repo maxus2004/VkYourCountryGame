@@ -95,6 +95,7 @@ namespace VkYourCountryGameBackend
                 }
                 else
                 {
+                    Console.WriteLine(context.Request.UrlReferrer.AbsoluteUri);
                     switch (context.Request.UrlReferrer.AbsoluteUri)
                     {
                         case "/yourcountryserver/getUser":
