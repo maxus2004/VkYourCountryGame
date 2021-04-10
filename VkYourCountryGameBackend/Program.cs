@@ -19,7 +19,7 @@ namespace VkYourCountryGameBackend
         static void Main(string[] args)
         {
             Console.WriteLine("starting server...");
-            sqlConnectStr = "server=192.168.1.5;user=yourcountrygame_server;database=yourcountrygame;password=GameServerPasswordForSQL;";
+            sqlConnectStr = "server=lcoalhost;user=yourcountrygame_server;database=yourcountrygame;password=GameServerPasswordForSQL;";
 
 
             httpListener = new HttpListener();
