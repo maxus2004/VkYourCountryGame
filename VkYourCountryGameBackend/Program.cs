@@ -147,7 +147,7 @@ namespace VkYourCountryGameBackend
             try
             {
 
-                log($"hash: {context.Request.QueryString}");
+                log($"hash: {context.Request.QueryString["user"]}");
                 string requestStr = await new StreamReader(context.Request.InputStream, Encoding.UTF8).ReadToEndAsync();
                 JObject request = JObject.Parse(requestStr);
 
