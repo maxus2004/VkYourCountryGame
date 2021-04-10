@@ -146,6 +146,8 @@ namespace VkYourCountryGameBackend
         {
             try
             {
+
+                log($"hash: {context.Request.QueryString}");
                 string requestStr = await new StreamReader(context.Request.InputStream, Encoding.UTF8).ReadToEndAsync();
                 JObject request = JObject.Parse(requestStr);
 
@@ -190,7 +192,7 @@ namespace VkYourCountryGameBackend
 
 
                 await SendJson(context, json);
-                log($"served getUser {request} for {context.Request.UserHostAddress}");
+                log($"served getUser {request}");
             }
             catch (Exception e)
             {
