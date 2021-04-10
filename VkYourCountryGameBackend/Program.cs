@@ -131,8 +131,13 @@ namespace VkYourCountryGameBackend
                 str += pair.Key + "=" + pair.Value + "&";
             }
             str = str.TrimEnd('&');
-            string sign = Convert.ToBase64String(new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)).ComputeHash(Encoding.UTF8.GetBytes(str)));
-            return sign.TrimEnd('=') == query["sign"];
+            string sign = Convert.ToBase64String(new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)).ComputeHash(Encoding.UTF8.GetBytes(str))).TrimEnd('=');
+
+            Console.WriteLine(str);
+            Console.WriteLine(sign);
+            Console.WriteLine(query["sign"]);
+
+            return sign == query["sign"];
         }
         private static async Task SendJson(HttpListenerContext context, JObject json)
         {
