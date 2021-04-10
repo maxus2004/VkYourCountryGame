@@ -95,7 +95,7 @@ namespace VkYourCountryGameBackend
                 }
                 else
                 {
-                    switch (context.Request.RawUrl)
+                    switch (context.Request.UrlReferrer.AbsoluteUri)
                     {
                         case "/yourcountryserver/getUser":
                             Task.Run(() => ProcessGetUser(context));
