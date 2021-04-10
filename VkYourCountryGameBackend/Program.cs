@@ -74,7 +74,20 @@ namespace VkYourCountryGameBackend
         {
             while (!stopped)
             {
-                HttpListenerContext context = httpListener.GetContext();
+                HttpListenerContext context;
+                try
+                {
+                    context = httpListener.GetContext();
+                }
+                catch (HttpListenerException e)
+                {
+                    if (e.ErrorCode != 500)
+                    {
+                        Console.Error.WriteLine(e);
+                    }
+                    continue;
+                }
+
                 if (context.Request.HttpMethod == "OPTIONS")
                 {
                     Task.Run(() => SendCORSHeaders(context));
