@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using MySql.Data.MySqlClient;
-
 namespace VkYourCountryGameBackend
 {
     class Program
@@ -151,7 +150,7 @@ namespace VkYourCountryGameBackend
                 MySqlConnection sqlConnection = new MySqlConnection(sqlConnectStr);
                 await sqlConnection.OpenAsync();
                 DbDataReader getUserSql = await new MySqlCommand(
-                    $"SELECT * FROM user WHERE id = `{request["id"]}`",
+                    $"SELECT * FROM user WHERE id = '{MySqlHelper.EscapeString(request["id"].ToString())}'",
                     sqlConnection).ExecuteReaderAsync();
                 bool found = await getUserSql.ReadAsync();
 
@@ -173,7 +172,7 @@ namespace VkYourCountryGameBackend
 
                     DbDataReader addUserSql = await new MySqlCommand(
                         "INSERT INTO user (id, money, health, hunger, happiness, owner_id, days) " +
-                        $"VALUES (`{request["id"]}`, `0`, `100`, `100`, `100`, NULL, `0`)",
+                        $"VALUES ('{MySqlHelper.EscapeString(request["id"].ToString())}', 0, 100, 100, 100, NULL, 0)",
                         sqlConnection).ExecuteReaderAsync();
                     await addUserSql.CloseAsync();
 
