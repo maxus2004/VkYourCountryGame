@@ -95,8 +95,8 @@ namespace VkYourCountryGameBackend
                 }
                 else
                 {
-                    Console.WriteLine(context.Request.UrlReferrer.LocalPath);
-                    switch (context.Request.UrlReferrer.LocalPath)
+                    Console.WriteLine(context.Request.UrlReferrer.OriginalString);
+                    switch (context.Request.Url.LocalPath)
                     {
                         case "/yourcountryserver/getUser":
                             Task.Run(() => ProcessGetUser(context));
