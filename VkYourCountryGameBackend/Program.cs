@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Data.Common;
-using System.IO;
+using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using MySql.Data.MySqlClient;
 namespace VkYourCountryGameBackend
@@ -71,11 +69,11 @@ namespace VkYourCountryGameBackend
             }
         }
 
-        private static void log(string str)
+        public static void Log(string str)
         {
             if (!logging) return;
             Console.CursorLeft = 0;
-            Console.WriteLine(DateTime.Now.ToString("dd.mm.yyyy HH:mm:ss")+" - "+str);
+            Console.WriteLine(DateTime.Now.ToString("dd.mm.yyyy HH:mm:ss") + " - " + str);
             Console.Write("> ");
         }
         private static void StartListening()
@@ -102,15 +100,32 @@ namespace VkYourCountryGameBackend
                 }
                 else
                 {
-                    switch (context.Request.Url.LocalPath)
+                    if (!VerifyUser(context.Request.QueryString))
                     {
-                        case "/yourcountryserver/getUser":
-                            Task.Run(() => ProcessGetUser(context));
-                            break;
-                        default:
-                            Task.Run(() => Send404(context));
-                            break;
+                        if (context.Request.QueryString.AllKeys.Contains("vk_user_id"))
+                            Log($"unauthorized client tried to connect as id{context.Request.QueryString["vk_user_id"]}");
+                        else
+                            Log($"unauthorized client tried to connect");
+                        Task.Run(() => SendError(context, "unauthorized"));
+                        return;
                     }
+
+                    MySqlConnection sqlConnection;
+                    if (context.Request.Url is not null)
+                        switch (context.Request.Url.LocalPath)
+                        {
+                            case "/yourcountryserver/getUser":
+                                sqlConnection = new MySqlConnection(sqlConnectStr);
+                                Task.Run(() => Game.ProcessGetUser(context, sqlConnection));
+                                break;
+                            case "/yourcountryserver/doTask":
+                                sqlConnection = new MySqlConnection(sqlConnectStr);
+                                Task.Run(() => Game.ProcessDoTask(context, sqlConnection));
+                                break;
+                            default:
+                                Task.Run(() => Send404(context));
+                                break;
+                        }
                 }
             }
             Console.WriteLine("stopped server");
@@ -121,7 +136,7 @@ namespace VkYourCountryGameBackend
             SortedDictionary<string, string> vkKeys = new SortedDictionary<string, string>();
             foreach (string name in query.AllKeys)
             {
-                if (name.StartsWith("vk_"))
+                if (name != null && name.StartsWith("vk_"))
                 {
                     vkKeys.Add(name, query[name]);
                 }
@@ -136,13 +151,20 @@ namespace VkYourCountryGameBackend
             string sign = Convert.ToBase64String(new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)).ComputeHash(Encoding.UTF8.GetBytes(str)));
             return sign.TrimEnd('=').Replace('+', '-').Replace('/', '_') == query["sign"];
         }
-        private static async Task SendJson(HttpListenerContext context, JObject json)
+        public static async Task SendJson(HttpListenerContext context, JObject json)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(json.ToString());
             context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
             context.Response.StatusCode = 200;
             context.Response.ContentLength64 = bytes.Length;
             await context.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+        }
+
+        public static async Task SendError(HttpListenerContext context, string error)
+        {
+            JObject json = new JObject();
+            json.Add("error", error);
+            await SendJson(context, json);
         }
 
         private static async Task SendCORSHeaders(HttpListenerContext context)
@@ -160,69 +182,6 @@ namespace VkYourCountryGameBackend
             context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
             await context.Response.OutputStream.WriteAsync(new byte[0], 0, 0);
 
-        }
-
-        private static async Task ProcessGetUser(HttpListenerContext context)
-        {
-            try
-            {
-                if (!VerifyUser(context.Request.QueryString))
-                {
-                    log($"unauthorized client tried to getUser for id{context.Request.QueryString["vk_user_id"]}");
-                    JObject json1 = new JObject();
-                    json1.Add("error", "Ты слишком тупой чтобы хакнуть эту игру. Иди пока делай домашку, может придумаешь способ получше");
-                    await SendJson(context, json1);
-                    return;
-                }
-
-                MySqlConnection sqlConnection = new MySqlConnection(sqlConnectStr);
-                await sqlConnection.OpenAsync();
-                DbDataReader getUserSql = await new MySqlCommand(
-                    $"SELECT * FROM user WHERE id = '{MySqlHelper.EscapeString(context.Request.QueryString["vk_user_id"])}'",
-                    sqlConnection).ExecuteReaderAsync();
-                bool found = await getUserSql.ReadAsync();
-
-                JObject json = new JObject();
-                if (found)
-                {
-                    json.Add("money", getUserSql.GetDouble(getUserSql.GetOrdinal("money")));
-                    json.Add("health", getUserSql.GetByte(getUserSql.GetOrdinal("health")));
-                    json.Add("hunger", getUserSql.GetByte(getUserSql.GetOrdinal("hunger")));
-                    json.Add("happiness", getUserSql.GetByte(getUserSql.GetOrdinal("happiness")));
-                    if (!await getUserSql.IsDBNullAsync(getUserSql.GetOrdinal("owner_id")))
-                        json.Add("owner", getUserSql.GetInt32(getUserSql.GetOrdinal("owner_id")));
-                    json.Add("days", getUserSql.GetInt32(getUserSql.GetOrdinal("days")));
-                    await getUserSql.CloseAsync();
-                }
-                else
-                {
-                    await getUserSql.CloseAsync();
-
-                    DbDataReader addUserSql = await new MySqlCommand(
-                        "INSERT INTO user (id, money, health, hunger, happiness, owner_id, days) " +
-                        $"VALUES ('{MySqlHelper.EscapeString(context.Request.QueryString["vk_user_id"])}', 0, 100, 100, 100, NULL, 0)",
-                        sqlConnection).ExecuteReaderAsync();
-                    await addUserSql.CloseAsync();
-
-                    log("added user " + context.Request.QueryString["vk_user_id"]);
-
-                    json.Add("money", 0);
-                    json.Add("health", 100);
-                    json.Add("hunger", 100);
-                    json.Add("happiness", 100);
-                    json.Add("days", 0);
-
-                }
-
-
-                await SendJson(context, json);
-                log($"served getUser for id{context.Request.QueryString["vk_user_id"]}");
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine(e);
-                context.Response.OutputStream.Close();
-            }
         }
     }
 }
