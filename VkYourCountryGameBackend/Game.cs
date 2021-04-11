@@ -10,15 +10,17 @@ using Newtonsoft.Json.Linq;
 
 namespace VkYourCountryGameBackend
 {
-    class GameTask
+    struct GameTask
     {
-        public GameTask(string name, long cost, long reward, int rewardDelay, bool repeating)
+        public GameTask(string name, long cost, long reward, int rewardDelay, bool repeating, double failRate)
         {
             this.name = name;
             this.cost = cost;
             this.reward = reward;
             this.rewardDelay = rewardDelay;
             this.repeating = repeating;
+            this.failRate = failRate;
+
         }
 
         public string name;
@@ -26,18 +28,20 @@ namespace VkYourCountryGameBackend
         public long reward;
         public int rewardDelay;
         public bool repeating;
+        public double failRate;
     }
 
     class Game
     {
+        private static Random random = new Random();
+
         static GameTask[] tasks = {
-            new (name: "Сдавать металлолом", cost: 0, reward: 50, rewardDelay: 0, repeating: false ),
-            new (name: "Сдавать металлолом", cost: 0, reward: 50, rewardDelay: 0, repeating: false ),
-            new (name: "Попрошайничать", cost: 0, reward: 50, rewardDelay: 0, repeating: false ),
-            new (name: "Работать на складе", cost: 0, reward: 5000, rewardDelay: 3, repeating: false ),
-            new (name: "Продавать мороженное", cost: 500, reward: 2000, rewardDelay: 0, repeating: false ),
-            new (name: "Открыть магазин", cost: 50000, reward: 200000, rewardDelay: 30, repeating: true ),
-            new (name: "Стать президентом", cost: 100000000, reward: 10000000000, rewardDelay: 365, repeating: false )
+            new GameTask( "Сдавать металлолом",  0,  50,  0,  false ,0.1),
+            new GameTask( "Попрошайничать",  0,  50,  0,  false , 0.25),
+            new GameTask( "Работать на складе",  0,  5000,  3,  false ,0.1),
+            new GameTask( "Продавать мороженное",  500,  2000,  0,  false ,0.05),
+            new GameTask( "Открыть магазин",  50000,  200000,  30,  true ,0.15),
+            new GameTask( "Стать президентом",  100000000,  10000000000,  365,  false ,0.5)
         };
 
         public static async Task ProcessDoTask(HttpListenerContext context, MySqlConnection sqlConnection)
@@ -60,6 +64,8 @@ namespace VkYourCountryGameBackend
                     return;
                 }
 
+                await sqlConnection.OpenAsync();
+
                 DbDataReader getUserSql = await new MySqlCommand(
                     $"SELECT * FROM user WHERE id = '{userId}'",
                     sqlConnection).ExecuteReaderAsync();
@@ -74,42 +80,57 @@ namespace VkYourCountryGameBackend
                     owner = getUserSql.GetInt32(getUserSql.GetOrdinal("owner_id"));
                 else
                     owner = null;
-                int days = getUserSql.GetInt32(getUserSql.GetOrdinal("days")));
+                int days = getUserSql.GetInt32(getUserSql.GetOrdinal("days"));
                 await getUserSql.CloseAsync();
 
-                if (owner == null)
+                if (money < tasks[taskId].cost)
                 {
-                    money -= tasks[taskId].cost;
-                    money += tasks[taskId].reward;
+                    await sqlConnection.CloseAsync();
+                    await Program.SendError(context, "not enough money");
+                    return;
+                }
+
+                money -= tasks[taskId].cost;
+                days += 1;
+                bool taskFailed = false;
+
+                if (random.NextDouble() < tasks[taskId].failRate)
+                {
+                    taskFailed = true;
                 }
                 else
                 {
-                    money -= tasks[taskId].cost;
-                    money += tasks[taskId].reward/2;
-
-                   long? ownerMoney = (long?)await new MySqlCommand(
-                        $"SELECT money FROM user WHERE id = '{owner}'",
-                        sqlConnection).ExecuteScalarAsync();
-                   if (ownerMoney != null)
-                   {
-                       ownerMoney += tasks[taskId].reward / 2;
-                       await new MySqlCommand(
-                           $"UPDATE user SET money = '{ownerMoney}' WHERE id = '{owner}'",
-                           sqlConnection).ExecuteNonQueryAsync();
+                    if (owner == null)
+                    {
+                        money += tasks[taskId].reward;
                     }
-                   else
-                   {
-                       ownerMoney = tasks[taskId].reward / 2;
-                       await new MySqlCommand(
-                           "INSERT INTO user (id, money, health, hunger, happiness, owner_id, days) " +
-                           $"VALUES ('{owner}', '{ownerMoney}', '100', '100', '100', NULL, '0')",
-                           sqlConnection).ExecuteNonQueryAsync();
+                    else
+                    {
+                        money += tasks[taskId].reward / 2;
+
+                        long? ownerMoney = (long?)await new MySqlCommand(
+                            $"SELECT money FROM user WHERE id = '{owner}'",
+                            sqlConnection).ExecuteScalarAsync();
+                        if (ownerMoney != null)
+                        {
+                            ownerMoney += tasks[taskId].reward / 2;
+                            await new MySqlCommand(
+                                $"UPDATE user SET money = '{ownerMoney}' WHERE id = '{owner}'",
+                                sqlConnection).ExecuteNonQueryAsync();
+                        }
+                        else
+                        {
+                            ownerMoney = tasks[taskId].reward / 2;
+                            await new MySqlCommand(
+                                "INSERT INTO user (id, money, health, hunger, happiness, owner_id, days) " +
+                                $"VALUES ('{owner}', '{ownerMoney}', '100', '100', '100', NULL, '0')",
+                                sqlConnection).ExecuteNonQueryAsync();
+                        }
                     }
                 }
 
-
                 await new MySqlCommand(
-                    $"UPDATE user SET money = '{money}' WHERE id = '{userId}'",
+                    $"UPDATE user SET money = '{money}', days = '{days}' WHERE id = '{userId}'",
                     sqlConnection).ExecuteNonQueryAsync();
 
                 JObject json = new JObject();
@@ -119,14 +140,17 @@ namespace VkYourCountryGameBackend
                 json.Add("happiness", happiness);
                 json.Add("owner", owner);
                 json.Add("days", days);
-                await Program.SendJson(context, json);
+                json.Add("failed", taskFailed);
 
-                Program.Log($"served doTask for id{context.Request.QueryString["vk_user_id"]}");
+                await sqlConnection.CloseAsync();
+                await Program.SendJson(context, json);
+                Program.Log($"served doTask {taskId} for id{userId}");
             }
             catch (Exception e)
             {
                 Console.Error.WriteLine(e);
                 context.Response.OutputStream.Close();
+                await sqlConnection.CloseAsync();
             }
         }
 
@@ -179,12 +203,14 @@ namespace VkYourCountryGameBackend
 
                 }
 
+                await sqlConnection.CloseAsync();
                 await Program.SendJson(context, json);
                 Program.Log($"served getUser for id{context.Request.QueryString["vk_user_id"]}");
             }
             catch (Exception e)
             {
                 Console.Error.WriteLine(e);
+                await sqlConnection.CloseAsync();
                 context.Response.OutputStream.Close();
             }
         }

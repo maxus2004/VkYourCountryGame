@@ -21,7 +21,7 @@ namespace VkYourCountryGameBackend
         static void Main(string[] args)
         {
             Console.WriteLine("starting server...");
-            sqlConnectStr = "server=localhost;user=yourcountrygame_server;database=yourcountrygame;password=GameServerPasswordForSQL;";
+            sqlConnectStr = "server=192.168.1.5;user=yourcountrygame_server;database=yourcountrygame;password=GameServerPasswordForSQL;";
 
 
             httpListener = new HttpListener();
@@ -115,12 +115,10 @@ namespace VkYourCountryGameBackend
                         switch (context.Request.Url.LocalPath)
                         {
                             case "/yourcountryserver/getUser":
-                                sqlConnection = new MySqlConnection(sqlConnectStr);
-                                Task.Run(() => Game.ProcessGetUser(context, sqlConnection));
+                                Task.Run(() => Game.ProcessGetUser(context, new MySqlConnection(sqlConnectStr)));
                                 break;
                             case "/yourcountryserver/doTask":
-                                sqlConnection = new MySqlConnection(sqlConnectStr);
-                                Task.Run(() => Game.ProcessDoTask(context, sqlConnection));
+                                Task.Run(() => Game.ProcessDoTask(context, new MySqlConnection(sqlConnectStr)));
                                 break;
                             default:
                                 Task.Run(() => Send404(context));
