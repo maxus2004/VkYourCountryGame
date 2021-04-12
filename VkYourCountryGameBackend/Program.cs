@@ -72,7 +72,7 @@ namespace VkYourCountryGameBackend
         public static void Log(string str)
         {
             if (!logging) return;
-            Console.CursorLeft = 0;
+            //Console.CursorLeft = 0;
             Console.WriteLine(DateTime.Now.ToString("dd.mm.yyyy HH:mm:ss") + " - " + str);
             Console.Write("> ");
         }
