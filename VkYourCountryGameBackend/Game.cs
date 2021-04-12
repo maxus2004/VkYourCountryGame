@@ -36,12 +36,12 @@ namespace VkYourCountryGameBackend
         private static Random random = new Random();
 
         static GameTask[] tasks = {
-            new GameTask( "Сдавать металлолом",  0,  50,  0,  false ,0.1),
-            new GameTask( "Попрошайничать",  0,  50,  0,  false , 0.25),
-            new GameTask( "Работать на складе",  0,  5000,  3,  false ,0.1),
+            new GameTask( "Сдавать металлолом",  0,  50,  0,  false ,0.15),
+            new GameTask( "Попрошайничать",  0,  50,  0,  false , 0.3),
+            new GameTask( "Работать на складе",  0,  5000,  3,  false ,0.2),
             new GameTask( "Продавать мороженное",  500,  2000,  0,  false ,0.05),
-            new GameTask( "Открыть магазин",  50000,  200000,  30,  true ,0.15),
-            new GameTask( "Стать президентом",  100000000,  10000000000,  365,  false ,0.5)
+            new GameTask( "Открыть магазин",  50000,  200000,  30,  true ,0.3),
+            new GameTask( "Стать президентом",  100000000,  10000000000,  365,  false ,0.9)
         };
 
         public static async Task ProcessDoTask(HttpListenerContext context, MySqlConnection sqlConnection)
