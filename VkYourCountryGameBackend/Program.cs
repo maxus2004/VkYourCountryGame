@@ -15,7 +15,7 @@ namespace VkYourCountryGameBackend
     {
         private static string secretKey = "EI8EGdM3svbzs76k8HYG";
         private static bool stopped = false;
-        private static bool logging = false;
+        private static bool logging = true;
         private static HttpListener httpListener;
         private static string sqlConnectStr;
         static void Main(string[] args)
@@ -119,6 +119,9 @@ namespace VkYourCountryGameBackend
                                 break;
                             case "/yourcountryserver/doTask":
                                 Task.Run(() => Game.ProcessDoTask(context, new MySqlConnection(sqlConnectStr)));
+                                break;
+                            case "/yourcountryserver/cancelTask":
+                                Task.Run(() => Game.ProcessCancelTask(context, new MySqlConnection(sqlConnectStr)));
                                 break;
                             default:
                                 Task.Run(() => Send404(context));
