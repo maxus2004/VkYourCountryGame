@@ -161,7 +161,7 @@ namespace VkYourCountryGameBackend
                     sqlConnection).ExecuteNonQueryAsync();
 
                 JObject json = new JObject();
-                json.Add("playerData", JsonConvert.SerializeObject(playerData));
+                json.Add("playerData", JObject.FromObject(playerData));
                 json.Add("failed", taskFailed);
 
                 await sqlConnection.CloseAsync();
