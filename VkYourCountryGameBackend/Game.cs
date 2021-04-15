@@ -181,6 +181,8 @@ namespace VkYourCountryGameBackend
                     }
                 }
 
+                await getUserTasksSql.CloseAsync();
+
                 await new MySqlCommand(
                     $"UPDATE user SET money = '{playerData.money}', days = '{playerData.days}' WHERE id = '{userId}'",
                     sqlConnection).ExecuteNonQueryAsync();
