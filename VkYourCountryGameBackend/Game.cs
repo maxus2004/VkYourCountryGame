@@ -201,7 +201,7 @@ namespace VkYourCountryGameBackend
                 await sqlConnection.OpenAsync();
                 await new MySqlCommand(
                     "DELETE FROM user_tasks " +
-                    $"WHERE task_name = '{tasks[taskId].db_name}' AND user_id = '{userId}')",
+                    $"WHERE task_name = '{tasks[taskId].db_name}' AND user_id = '{userId}'",
                     sqlConnection).ExecuteNonQueryAsync();
                 await sqlConnection.CloseAsync();
 
