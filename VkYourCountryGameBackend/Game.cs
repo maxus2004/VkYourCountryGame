@@ -36,10 +36,20 @@ namespace VkYourCountryGameBackend
     {
         private static Random random = new Random();
 
+        private static Dictionary<string, int> taskIds = new()
+        {
+            { "scrap_metal", 0 },
+            { "beg", 1 },
+            { "warehouse", 2 },
+            { "ice_cream", 3 },
+            { "shop", 4 },
+            { "president", 5 }
+        };
+
         static GameTask[] tasks = {
             new GameTask{ db_name = "scrap_metal", cost = 0,         reward = 50,          rewardInterval = 0,   repeating = false, failRate = 0.1},
             new GameTask{ db_name = "beg",         cost = 0,         reward = 50,          rewardInterval = 0,   repeating = false, failRate = 0.25},
-            new GameTask{ db_name = "warehouse",   cost = 0,         reward = 5000,        rewardInterval = 0,   repeating = false, failRate = 0.1},
+            new GameTask{ db_name = "warehouse",   cost = 250,       reward = 2000,        rewardInterval = 0,   repeating = false, failRate = 0.1},
             new GameTask{ db_name = "ice_cream",   cost = 500,       reward = 2000,        rewardInterval = 0,   repeating = false, failRate = 0.05},
             new GameTask{ db_name = "shop",        cost = 50000,     reward = 200000,      rewardInterval = 30,  repeating = true,  failRate = 0.15},
             new GameTask{ db_name = "president",   cost = 100000000, reward = 10000000000, rewardInterval = 365, repeating = true,  failRate = 0.5}
@@ -156,6 +166,21 @@ namespace VkYourCountryGameBackend
                     }
                 }
 
+                DbDataReader getUserTasksSql = await new MySqlCommand(
+                    $"SELECT * FROM user_tasks WHERE user_id = '{userId}'",
+                    sqlConnection).ExecuteReaderAsync();
+                while (await getUserTasksSql.ReadAsync())
+                {
+                    string taskName = getUserSql.GetString(getUserSql.GetOrdinal("task_name"));
+                    int startedAt = getUserSql.GetInt32(getUserSql.GetOrdinal("started_at"));
+                    int repeatingTaskId = taskIds[taskName];
+
+                    if (playerData.days - startedAt > tasks[repeatingTaskId].rewardInterval)
+                    {
+                        playerData = await DoPlayerTask(sqlConnection, repeatingTaskId, playerData);
+                    }
+                }
+
                 await new MySqlCommand(
                     $"UPDATE user SET money = '{playerData.money}', days = '{playerData.days}' WHERE id = '{userId}'",
                     sqlConnection).ExecuteNonQueryAsync();
@@ -205,7 +230,7 @@ namespace VkYourCountryGameBackend
                     sqlConnection).ExecuteNonQueryAsync();
                 await sqlConnection.CloseAsync();
 
-                JObject json = new JObject {{"result", "ok"}};
+                JObject json = new JObject { { "result", "ok" } };
                 await Program.SendJson(context, json);
                 Program.Log($"served cancelTask {taskId} for id{userId}");
             }
