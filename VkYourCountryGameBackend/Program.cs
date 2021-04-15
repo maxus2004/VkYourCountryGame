@@ -107,10 +107,9 @@ namespace VkYourCountryGameBackend
                         else
                             Log($"unauthorized client tried to connect");
                         Task.Run(() => SendError(context, "unauthorized"));
-                        return;
                     }
-
-                    if (context.Request.Url is not null)
+                    else if (context.Request.Url is not null)
+                    {
                         switch (context.Request.Url.LocalPath)
                         {
                             case "/yourcountryserver/getUser":
@@ -126,6 +125,7 @@ namespace VkYourCountryGameBackend
                                 Task.Run(() => Send404(context));
                                 break;
                         }
+                    }
                 }
             }
             Console.WriteLine("stopped server");
