@@ -110,7 +110,6 @@ namespace VkYourCountryGameBackend
                         return;
                     }
 
-                    MySqlConnection sqlConnection;
                     if (context.Request.Url is not null)
                         switch (context.Request.Url.LocalPath)
                         {

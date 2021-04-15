@@ -139,7 +139,7 @@ namespace VkYourCountryGameBackend
                 }
                 else
                 {
-                    int? count = (int?)await new MySqlCommand(
+                    long? count = (long?)await new MySqlCommand(
                         $"SELECT COUNT(*) FROM user_tasks WHERE user_id = '{userId}' AND task_name = '{tasks[taskId].db_name}'",
                         sqlConnection).ExecuteScalarAsync();
                     if (count == 0)
