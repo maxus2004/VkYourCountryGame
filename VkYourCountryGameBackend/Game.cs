@@ -171,8 +171,8 @@ namespace VkYourCountryGameBackend
                     sqlConnection).ExecuteReaderAsync();
                 while (await getUserTasksSql.ReadAsync())
                 {
-                    string taskName = getUserSql.GetString(getUserSql.GetOrdinal("task_name"));
-                    int startedAt = getUserSql.GetInt32(getUserSql.GetOrdinal("started_at"));
+                    string taskName = getUserTasksSql.GetString(getUserTasksSql.GetOrdinal("task_name"));
+                    int startedAt = getUserTasksSql.GetInt32(getUserTasksSql.GetOrdinal("started_at"));
                     int repeatingTaskId = taskIds[taskName];
 
                     if (playerData.days - startedAt > tasks[repeatingTaskId].rewardInterval)
