@@ -180,6 +180,7 @@ namespace VkYourCountryGameBackend
                     if ((playerData.days - startedAt) > 0 && (playerData.days - startedAt) % tasks[repeatingTaskId].rewardInterval == 0)
                     {
                         playerData = await DoPlayerTask(sqlConnection, repeatingTaskId, playerData);
+                        Program.Log($"player id{userId} earned from job {repeatingTaskId}");
                     }
                 }
 
