@@ -205,7 +205,7 @@ namespace VkYourCountryGameBackend
                     sqlConnection).ExecuteNonQueryAsync();
                 await sqlConnection.CloseAsync();
 
-                JObject json = new JObject("result", "ok");
+                JObject json = new JObject {{"result", "ok"}};
                 await Program.SendJson(context, json);
                 Program.Log($"served cancelTask {taskId} for id{userId}");
             }
