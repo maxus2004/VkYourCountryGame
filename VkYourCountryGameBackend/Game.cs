@@ -175,7 +175,7 @@ namespace VkYourCountryGameBackend
                     int startedAt = getUserTasksSql.GetInt32(getUserTasksSql.GetOrdinal("started_at"));
                     int repeatingTaskId = taskIds[taskName];
 
-                    if (playerData.days - startedAt > tasks[repeatingTaskId].rewardInterval)
+                    if ((playerData.days - startedAt) > 0 && (playerData.days - startedAt) % tasks[repeatingTaskId].rewardInterval == 0)
                     {
                         playerData = await DoPlayerTask(sqlConnection, repeatingTaskId, playerData);
                     }
