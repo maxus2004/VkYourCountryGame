@@ -174,6 +174,7 @@ namespace VkYourCountryGameBackend
                 DbDataReader getUserTasksSql = await new MySqlCommand(
                     $"SELECT * FROM user_tasks WHERE user_id = '{userId}'",
                     sqlConnection).ExecuteReaderAsync();
+                List<int> tasksToDo = new List<int>();
                 while (await getUserTasksSql.ReadAsync())
                 {
                     string taskName = getUserTasksSql.GetString(getUserTasksSql.GetOrdinal("task_name"));
@@ -182,12 +183,16 @@ namespace VkYourCountryGameBackend
 
                     if ((playerData.days - startedAt) > 0 && (playerData.days - startedAt) % tasks[repeatingTaskId].rewardInterval == 0)
                     {
-                        playerData = await DoPlayerTask(sqlConnection, repeatingTaskId, playerData);
-                        Program.Log($"player id{userId} earned from job {repeatingTaskId}");
+                        tasksToDo.Add(repeatingTaskId);
                     }
                 }
-
                 await getUserTasksSql.CloseAsync();
+
+                foreach (int repeatingTaskId in tasksToDo)
+                {
+                    playerData = await DoPlayerTask(sqlConnection, repeatingTaskId, playerData);
+                    Program.Log($"player id{userId} earned from job {repeatingTaskId}");
+                }
 
                 await new MySqlCommand(
                     $"UPDATE user SET money = '{playerData.money}', days = '{playerData.days}' WHERE id = '{userId}'",
