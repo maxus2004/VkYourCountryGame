@@ -250,6 +250,107 @@ namespace VkYourCountryGameBackend
             }
         }
 
+        public static async Task ProcessGetFree(HttpListenerContext context, MySqlConnection sqlConnection)
+        {
+            try
+            {
+                if (!int.TryParse(context.Request.QueryString["vk_user_id"], out int userId))
+                {
+                    await Program.SendError(context, "invalid user id");
+                    return;
+                }
+
+                await sqlConnection.OpenAsync();
+
+                DbDataReader getUserSql = await new MySqlCommand(
+                    $"SELECT * FROM user WHERE id = '{userId}'",
+                    sqlConnection).ExecuteReaderAsync();
+                await getUserSql.ReadAsync();
+
+                PlayerData playerData = new PlayerData();
+
+                playerData.money = getUserSql.GetInt64(getUserSql.GetOrdinal("money"));
+                playerData.health = getUserSql.GetByte(getUserSql.GetOrdinal("health"));
+                playerData.hunger = getUserSql.GetByte(getUserSql.GetOrdinal("hunger"));
+                playerData.happiness = getUserSql.GetByte(getUserSql.GetOrdinal("happiness"));
+                if (!await getUserSql.IsDBNullAsync(getUserSql.GetOrdinal("owner_id")))
+                    playerData.owner = getUserSql.GetInt32(getUserSql.GetOrdinal("owner_id"));
+                else
+                    playerData.owner = null;
+                playerData.days = getUserSql.GetInt32(getUserSql.GetOrdinal("days"));
+                await getUserSql.CloseAsync();
+
+                if (playerData.money < 1000000)
+                {
+                    await sqlConnection.CloseAsync();
+                    await Program.SendError(context, "not enough money");
+                    return;
+                }
+
+                playerData.owner = null;
+                playerData.money -= 1000000;
+
+                await new MySqlCommand(
+                    $"UPDATE user SET owner = NULL, money = '{playerData.money}' WHERE id = '{userId}'",
+                    sqlConnection).ExecuteNonQueryAsync();
+
+                await sqlConnection.CloseAsync();
+
+                JObject json = JObject.FromObject(playerData);
+                await Program.SendJson(context, json);
+                Program.Log($"served getFree for id{userId}");
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e);
+                context.Response.OutputStream.Close();
+                await sqlConnection.CloseAsync();
+            }
+        }
+
+        public static async Task ProcessBecomeSlave(HttpListenerContext context, MySqlConnection sqlConnection)
+        {
+            try
+            {
+                if (!int.TryParse(context.Request.QueryString["vk_user_id"], out int userId))
+                {
+                    await Program.SendError(context, "invalid user id");
+                    return;
+                }
+                if (!int.TryParse(context.Request.QueryString["owner_id"], out int ownerId))
+                {
+                    await Program.SendError(context, "invalid owner id");
+                    return;
+                }
+
+                await sqlConnection.OpenAsync();
+                long? prevOwnerId = (long?)await new MySqlCommand(
+                    $"SELECT owner_id FROM user WHERE id = '{userId}'",
+                    sqlConnection).ExecuteScalarAsync();
+
+                if (prevOwnerId == null)
+                {
+                    await sqlConnection.CloseAsync();
+                    await Program.SendError(context, "already slave");
+                    return;
+                }
+                await new MySqlCommand(
+                    $"UPDATE user SET owner = '{ownerId}' WHERE id = '{userId}'",
+                    sqlConnection).ExecuteNonQueryAsync();
+                await sqlConnection.CloseAsync();
+
+                JObject json = JObject.FromObject(ownerId);
+                await Program.SendJson(context, json);
+                Program.Log($"served become slave of id{ownerId} for id{userId}");
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e);
+                context.Response.OutputStream.Close();
+                await sqlConnection.CloseAsync();
+            }
+        }
+
         public static async Task ProcessGetUser(HttpListenerContext context, MySqlConnection sqlConnection)
         {
             try
