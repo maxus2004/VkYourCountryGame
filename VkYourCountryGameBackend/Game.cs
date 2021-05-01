@@ -291,7 +291,7 @@ namespace VkYourCountryGameBackend
                 playerData.money -= 1000000;
 
                 await new MySqlCommand(
-                    $"UPDATE user SET owner = NULL, money = '{playerData.money}' WHERE id = '{userId}'",
+                    $"UPDATE user SET owner_id = NULL, money = '{playerData.money}' WHERE id = '{userId}'",
                     sqlConnection).ExecuteNonQueryAsync();
 
                 await sqlConnection.CloseAsync();
@@ -335,7 +335,7 @@ namespace VkYourCountryGameBackend
                     return;
                 }
                 await new MySqlCommand(
-                    $"UPDATE user SET owner = '{ownerId}' WHERE id = '{userId}'",
+                    $"UPDATE user SET owner_id = '{ownerId}' WHERE id = '{userId}'",
                     sqlConnection).ExecuteNonQueryAsync();
                 await sqlConnection.CloseAsync();
 
@@ -373,7 +373,7 @@ namespace VkYourCountryGameBackend
                     userJson.Add("health", getUserSql.GetByte(getUserSql.GetOrdinal("health")));
                     userJson.Add("hunger", getUserSql.GetByte(getUserSql.GetOrdinal("hunger")));
                     userJson.Add("happiness", getUserSql.GetByte(getUserSql.GetOrdinal("happiness")));
-                    if (!getUserSql.IsDBNull(getUserSql.GetOrdinal("owner_id")))
+                    if (!await getUserSql.IsDBNullAsync(getUserSql.GetOrdinal("owner_id")))
                         userJson.Add("owner", getUserSql.GetInt32(getUserSql.GetOrdinal("owner_id")));
                     else
                         userJson.Add("owner", null);
