@@ -373,7 +373,7 @@ namespace VkYourCountryGameBackend
                     userJson.Add("health", getUserSql.GetByte(getUserSql.GetOrdinal("health")));
                     userJson.Add("hunger", getUserSql.GetByte(getUserSql.GetOrdinal("hunger")));
                     userJson.Add("happiness", getUserSql.GetByte(getUserSql.GetOrdinal("happiness")));
-                    if (!await getUserSql.IsDBNullAsync(getUserSql.GetOrdinal("owner_id")))
+                    if (!getUserSql.IsDBNull(getUserSql.GetOrdinal("owner_id")))
                         userJson.Add("owner", getUserSql.GetInt32(getUserSql.GetOrdinal("owner_id")));
                     else
                         userJson.Add("owner", null);
