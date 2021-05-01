@@ -328,7 +328,7 @@ namespace VkYourCountryGameBackend
                     $"SELECT owner_id FROM user WHERE id = '{userId}'",
                     sqlConnection).ExecuteScalarAsync());
 
-                if (isNull)
+                if (!isNull)
                 {
                     await sqlConnection.CloseAsync();
                     await Program.SendError(context, "already slave");
