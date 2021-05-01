@@ -265,18 +265,18 @@ namespace VkYourCountryGameBackend
                     sqlConnection).ExecuteReaderAsync();
                 bool found = await getUserSql.ReadAsync();
 
-                JObject json = new JObject();
+                JObject userJson = new JObject();
                 if (found)
                 {
-                    json.Add("money", getUserSql.GetInt64(getUserSql.GetOrdinal("money")));
-                    json.Add("health", getUserSql.GetByte(getUserSql.GetOrdinal("health")));
-                    json.Add("hunger", getUserSql.GetByte(getUserSql.GetOrdinal("hunger")));
-                    json.Add("happiness", getUserSql.GetByte(getUserSql.GetOrdinal("happiness")));
+                    userJson.Add("money", getUserSql.GetInt64(getUserSql.GetOrdinal("money")));
+                    userJson.Add("health", getUserSql.GetByte(getUserSql.GetOrdinal("health")));
+                    userJson.Add("hunger", getUserSql.GetByte(getUserSql.GetOrdinal("hunger")));
+                    userJson.Add("happiness", getUserSql.GetByte(getUserSql.GetOrdinal("happiness")));
                     if (!await getUserSql.IsDBNullAsync(getUserSql.GetOrdinal("owner_id")))
-                        json.Add("owner", getUserSql.GetInt32(getUserSql.GetOrdinal("owner_id")));
+                        userJson.Add("owner", getUserSql.GetInt32(getUserSql.GetOrdinal("owner_id")));
                     else
-                        json.Add("owner", null);
-                    json.Add("days", getUserSql.GetInt32(getUserSql.GetOrdinal("days")));
+                        userJson.Add("owner", null);
+                    userJson.Add("days", getUserSql.GetInt32(getUserSql.GetOrdinal("days")));
                     await getUserSql.CloseAsync();
                 }
                 else
@@ -290,14 +290,27 @@ namespace VkYourCountryGameBackend
 
                     Program.Log("added user " + userId);
 
-                    json.Add("money", 0);
-                    json.Add("health", 100);
-                    json.Add("hunger", 100);
-                    json.Add("happiness", 100);
-                    json.Add("owner", null);
-                    json.Add("days", 0);
+                    userJson.Add("money", 0);
+                    userJson.Add("health", 100);
+                    userJson.Add("hunger", 100);
+                    userJson.Add("happiness", 100);
+                    userJson.Add("owner", null);
+                    userJson.Add("days", 0);
 
                 }
+
+                DbDataReader getUserTasksSql = await new MySqlCommand(
+                    $"SELECT task_name FROM user_tasks WHERE user_id = '{userId}'",
+                    sqlConnection).ExecuteReaderAsync();
+                JArray tasksJson = new JArray();
+                while (await getUserTasksSql.ReadAsync())
+                {
+                    string taskName = getUserTasksSql.GetString(0);
+                    tasksJson.Add(JToken.FromObject(taskIds[taskName]));
+                }
+                await getUserTasksSql.CloseAsync();
+
+                JObject json = new JObject {userJson, tasksJson};
 
                 await sqlConnection.CloseAsync();
                 await Program.SendJson(context, json);
