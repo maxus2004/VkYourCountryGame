@@ -310,7 +310,9 @@ namespace VkYourCountryGameBackend
                 }
                 await getUserTasksSql.CloseAsync();
 
-                JObject json = new JObject {userJson, tasksJson};
+                JObject json = new JObject();
+                json.Add("userData",userJson);
+                json.Add("activeTasks",tasksJson);
 
                 await sqlConnection.CloseAsync();
                 await Program.SendJson(context, json);
