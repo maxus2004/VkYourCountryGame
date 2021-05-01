@@ -153,7 +153,7 @@ namespace VkYourCountryGameBackend
             {
                 str += pair.Key + "=" + pair.Value + "&";
             }
-            str = str.TrimEnd('&');
+            str = str.TrimEnd('&').Replace(",", "%2C");
             string sign = Convert.ToBase64String(new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)).ComputeHash(Encoding.UTF8.GetBytes(str)));
 
             Console.WriteLine(str);
