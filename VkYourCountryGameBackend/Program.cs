@@ -156,9 +156,9 @@ namespace VkYourCountryGameBackend
             str = str.TrimEnd('&').Replace(",", "%2C");
             string sign = Convert.ToBase64String(new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)).ComputeHash(Encoding.UTF8.GetBytes(str)));
 
-            Console.WriteLine(str);
-            Console.WriteLine(sign);
-            Console.WriteLine(query["sign"]);
+            //Console.WriteLine(str);
+            //Console.WriteLine(sign);
+            //Console.WriteLine(query["sign"]);
 
             return sign.TrimEnd('=').Replace('+', '-').Replace('/', '_') == query["sign"];
         }
