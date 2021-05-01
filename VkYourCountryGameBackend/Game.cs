@@ -48,6 +48,7 @@ namespace VkYourCountryGameBackend
         };
 
         static GameTask[] tasks = {
+            new GameTask{ db_name = "watch_ad",    cost = 0,         reward = 0,           rewardInterval = 0,   repeating = false, failRate = 0},
             new GameTask{ db_name = "scrap_metal", cost = 0,         reward = 50,          rewardInterval = 0,   repeating = false, failRate = 0.1},
             new GameTask{ db_name = "beg",         cost = 0,         reward = 50,          rewardInterval = 0,   repeating = false, failRate = 0.3},
             new GameTask{ db_name = "warehouse",   cost = 250,       reward = 2000,        rewardInterval = 0,   repeating = false, failRate = 0.2},
