@@ -38,13 +38,14 @@ namespace VkYourCountryGameBackend
 
         private static Dictionary<string, int> taskIds = new()
         {
-            { "scrap_metal", 0 },
-            { "beg", 1 },
-            { "warehouse", 2 },
-            { "ice_cream", 3 },
-            { "pc_master", 4 },
-            { "shop", 5 },
-            { "president", 6 }
+            { "watch_ad" , 0},
+            { "scrap_metal", 1 },
+            { "beg", 2 },
+            { "warehouse", 3 },
+            { "ice_cream", 4 },
+            { "pc_master", 5 },
+            { "shop", 6 },
+            { "president", 7 }
         };
 
         static GameTask[] tasks = {
