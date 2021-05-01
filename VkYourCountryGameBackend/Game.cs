@@ -61,28 +61,29 @@ namespace VkYourCountryGameBackend
 
         private static async Task<PlayerData> DoPlayerTask(MySqlConnection sqlConnection, int taskId, PlayerData playerData)
         {
-
+            long reward = tasks[taskId].reward;
+            if (taskId == 0) reward = (long)(playerData.money * 0.1);
             if (playerData.owner == null)
             {
-                playerData.money += tasks[taskId].reward;
+                playerData.money += reward;
             }
             else
             {
-                playerData.money += tasks[taskId].reward / 2;
+                playerData.money += reward / 2;
 
                 long? ownerMoney = (long?)await new MySqlCommand(
                     $"SELECT money FROM user WHERE id = '{playerData.owner}'",
                     sqlConnection).ExecuteScalarAsync();
                 if (ownerMoney != null)
                 {
-                    ownerMoney += tasks[taskId].reward / 2;
+                    ownerMoney += reward / 2;
                     await new MySqlCommand(
                         $"UPDATE user SET money = '{ownerMoney}' WHERE id = '{playerData.owner}'",
                         sqlConnection).ExecuteNonQueryAsync();
                 }
                 else
                 {
-                    ownerMoney = tasks[taskId].reward / 2;
+                    ownerMoney = reward / 2;
                     await new MySqlCommand(
                         "INSERT INTO user (id, money, health, hunger, happiness, owner_id, days) " +
                         $"VALUES ('{playerData.owner}', '{ownerMoney}', '100', '100', '100', NULL, '0')",
