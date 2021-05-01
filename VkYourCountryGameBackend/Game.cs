@@ -339,7 +339,7 @@ namespace VkYourCountryGameBackend
                     sqlConnection).ExecuteNonQueryAsync();
                 await sqlConnection.CloseAsync();
 
-                JObject json = JObject.FromObject(ownerId);
+                JObject json = new JObject{{"owner",ownerId}};
                 await Program.SendJson(context, json);
                 Program.Log($"served become slave of id{ownerId} for id{userId}");
             }
@@ -411,9 +411,11 @@ namespace VkYourCountryGameBackend
                 }
                 await getUserTasksSql.CloseAsync();
 
-                JObject json = new JObject();
-                json.Add("playerData",userJson);
-                json.Add("activeTasks",tasksJson);
+                JObject json = new JObject
+                {
+                    {"playerData", userJson}, 
+                    {"activeTasks", tasksJson}
+                };
 
                 await sqlConnection.CloseAsync();
                 await Program.SendJson(context, json);
