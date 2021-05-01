@@ -324,11 +324,11 @@ namespace VkYourCountryGameBackend
                 }
 
                 await sqlConnection.OpenAsync();
-                long? prevOwnerId = (long?)await new MySqlCommand(
+                bool isNull = Convert.IsDBNull(await new MySqlCommand(
                     $"SELECT owner_id FROM user WHERE id = '{userId}'",
-                    sqlConnection).ExecuteScalarAsync();
+                    sqlConnection).ExecuteScalarAsync());
 
-                if (prevOwnerId == null)
+                if (isNull)
                 {
                     await sqlConnection.CloseAsync();
                     await Program.SendError(context, "already slave");
