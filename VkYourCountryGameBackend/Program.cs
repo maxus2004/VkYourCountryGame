@@ -155,7 +155,8 @@ namespace VkYourCountryGameBackend
             }
             str = str.TrimEnd('&');
             string sign = Convert.ToBase64String(new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)).ComputeHash(Encoding.UTF8.GetBytes(str)));
-            
+
+            Console.WriteLine(str);
             Console.WriteLine(sign);
             Console.WriteLine(query["sign"]);
 
