@@ -29,7 +29,7 @@ namespace VkYourCountryGameBackend
         public byte happiness;
         public int? owner;
         public int days;
-
+        public int slaves;
     }
 
     class Game
@@ -133,7 +133,9 @@ namespace VkYourCountryGameBackend
                     playerData.owner = null;
                 playerData.days = getUserSql.GetInt32(getUserSql.GetOrdinal("days"));
                 await getUserSql.CloseAsync();
-
+                playerData.slaves = (int?) await new MySqlCommand(
+                    $"SELECT COUNT(*) FROM user WHERE owner_id = '{userId}'",
+                    sqlConnection).ExecuteScalarAsync() ?? 0;
                 if (playerData.money < tasks[taskId].cost)
                 {
                     await sqlConnection.CloseAsync();
@@ -284,6 +286,9 @@ namespace VkYourCountryGameBackend
                     playerData.owner = null;
                 playerData.days = getUserSql.GetInt32(getUserSql.GetOrdinal("days"));
                 await getUserSql.CloseAsync();
+                playerData.slaves = (int?)await new MySqlCommand(
+                    $"SELECT COUNT(*) FROM user WHERE owner_id = '{userId}'",
+                    sqlConnection).ExecuteScalarAsync() ?? 0;
 
                 if (playerData.money < 1000000)
                 {
@@ -384,6 +389,9 @@ namespace VkYourCountryGameBackend
                         userJson.Add("owner", null);
                     userJson.Add("days", getUserSql.GetInt32(getUserSql.GetOrdinal("days")));
                     await getUserSql.CloseAsync();
+                    userJson.Add("slaves", (int?)await new MySqlCommand(
+                        $"SELECT COUNT(*) FROM user WHERE owner_id = '{userId}'",
+                        sqlConnection).ExecuteScalarAsync());
                 }
                 else
                 {
@@ -402,7 +410,7 @@ namespace VkYourCountryGameBackend
                     userJson.Add("happiness", 100);
                     userJson.Add("owner", null);
                     userJson.Add("days", 0);
-
+                    userJson.Add("slaves", 0);
                 }
 
                 DbDataReader getUserTasksSql = await new MySqlCommand(
