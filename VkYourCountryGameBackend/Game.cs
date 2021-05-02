@@ -274,6 +274,11 @@ namespace VkYourCountryGameBackend
 
                 for (int i = 0; i < 20; i++)
                 {
+                    if (await getLeadersSql.ReadAsync() == false)
+                    {
+                        break;
+                    }
+
                     leaders[i] = new JObject
                     {
                         { "id", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
