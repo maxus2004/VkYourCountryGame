@@ -283,7 +283,7 @@ namespace VkYourCountryGameBackend
                     {
                         { "id", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
                         { "money", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
-                        { "money", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
+                        { "slaves", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
                     };
                 }
 
