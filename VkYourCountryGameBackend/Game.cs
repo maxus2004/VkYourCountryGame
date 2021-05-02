@@ -272,7 +272,8 @@ namespace VkYourCountryGameBackend
                     "SELECT * FROM `user` ORDER BY money DESC",
                     sqlConnection).ExecuteReaderAsync();
 
-                string ids = "";
+                string idsStr = "";
+                Dictionary<int, int> places = new Dictionary<int, int>();
 
                 for (int i = 0; i < 20; i++)
                 {
@@ -282,7 +283,8 @@ namespace VkYourCountryGameBackend
                     }
 
                     int id = getLeadersSql.GetInt32(getLeadersSql.GetOrdinal("id"));
-                    ids += id + ",";
+                    idsStr += id + ",";
+                    places.Add(id,i);
                     leaders.Add(new JObject
                     {
                         { "id", getLeadersSql.GetInt32(getLeadersSql.GetOrdinal("id")) },
@@ -294,12 +296,13 @@ namespace VkYourCountryGameBackend
                 await getLeadersSql.CloseAsync();
 
                 DbDataReader getSlaveCount = await new MySqlCommand(
-                    $"SELECT * FROM slave_count WHERE user_id IN ({ids.TrimEnd(',')})",
+                    $"SELECT * FROM slave_count WHERE user_id IN ({idsStr.TrimEnd(',')})",
                     sqlConnection).ExecuteReaderAsync();
                 while (await getSlaveCount.ReadAsync())
                 {
                     int id  = getSlaveCount.GetInt32(getSlaveCount.GetOrdinal("user_id"));
-                    leaders[id]["slaves"] = getSlaveCount.GetInt32(getSlaveCount.GetOrdinal("slaves"));
+                    int place = places[id];
+                    leaders[place]["slaves"] = getSlaveCount.GetInt32(getSlaveCount.GetOrdinal("slaves"));
                 }
                 await getSlaveCount.CloseAsync();
 
