@@ -288,7 +288,7 @@ namespace VkYourCountryGameBackend
 
                 await sqlConnection.CloseAsync();
 
-                await Program.SendJson(context, leaders);
+                await Program.SendJson(context, (JObject.FromObject(leaders)));
                 Program.Log($"served getLeaders for id{userId}");
             }
             catch (Exception e)
