@@ -305,6 +305,8 @@ namespace VkYourCountryGameBackend
                     $"SELECT money FROM user WHERE id = '{playerData.owner}'",
                     sqlConnection).ExecuteScalarAsync();
 
+                ownerMoney += 1000000;
+
                 await new MySqlCommand(
                     $"UPDATE user SET money = '{ownerMoney}' WHERE id = '{playerData.owner}'",
                     sqlConnection).ExecuteNonQueryAsync();
