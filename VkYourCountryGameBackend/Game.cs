@@ -133,7 +133,7 @@ namespace VkYourCountryGameBackend
                     playerData.owner = null;
                 playerData.days = getUserSql.GetInt32(getUserSql.GetOrdinal("days"));
                 await getUserSql.CloseAsync();
-                playerData.slaves = (int)((int?) await new MySqlCommand(
+                playerData.slaves = (int)((long?) await new MySqlCommand(
                     $"SELECT COUNT(*) FROM user WHERE owner_id = '{userId}'",
                     sqlConnection).ExecuteScalarAsync() ?? 0);
                 if (playerData.money < tasks[taskId].cost)
