@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace VkYourCountryGameBackend
@@ -290,12 +287,27 @@ namespace VkYourCountryGameBackend
                     $"SELECT COUNT(*) FROM user WHERE owner_id = '{userId}'",
                     sqlConnection).ExecuteScalarAsync() ?? 0);
 
+                if (playerData.owner == null)
+                {
+                    await sqlConnection.CloseAsync();
+                    await Program.SendError(context, "already free");
+                    return;
+                }
+
                 if (playerData.money < 1000000)
                 {
                     await sqlConnection.CloseAsync();
                     await Program.SendError(context, "not enough money");
                     return;
                 }
+
+                long? ownerMoney = (long?)await new MySqlCommand(
+                    $"SELECT money FROM user WHERE id = '{playerData.owner}'",
+                    sqlConnection).ExecuteScalarAsync();
+
+                await new MySqlCommand(
+                    $"UPDATE user SET money = '{ownerMoney}' WHERE id = '{playerData.owner}'",
+                    sqlConnection).ExecuteNonQueryAsync();
 
                 playerData.owner = null;
                 playerData.money -= 1000000;
