@@ -49,9 +49,9 @@ namespace VkYourCountryGameBackend
             new GameTask{ db_name = "watch_ad",    cost = 0,         reward = 0,           rewardInterval = 0,   repeating = false, failRate = 0},
             new GameTask{ db_name = "scrap_metal", cost = 0,         reward = 50,          rewardInterval = 0,   repeating = false, failRate = 0.1},
             new GameTask{ db_name = "beg",         cost = 0,         reward = 50,          rewardInterval = 0,   repeating = false, failRate = 0.3},
-            new GameTask{ db_name = "warehouse",   cost = 250,       reward = 2000,        rewardInterval = 0,   repeating = false, failRate = 0.2},
-            new GameTask{ db_name = "ice_cream",   cost = 500,       reward = 2000,        rewardInterval = 0,   repeating = false, failRate = 0.05},
-            new GameTask{ db_name = "pc_master",   cost = 5000,      reward = 30000,       rewardInterval = 0,   repeating = false, failRate = 0.1},
+            new GameTask{ db_name = "warehouse",   cost = 250,       reward = 750,        rewardInterval = 0,   repeating = false, failRate = 0.2},
+            new GameTask{ db_name = "ice_cream",   cost = 500,       reward = 1000,        rewardInterval = 0,   repeating = false, failRate = 0.05},
+            new GameTask{ db_name = "pc_master",   cost = 4000,      reward = 10000,       rewardInterval = 0,   repeating = false, failRate = 0.1},
             new GameTask{ db_name = "shop",        cost = 100000,    reward = 200000,      rewardInterval = 10,  repeating = true,  failRate = 0.3},
             new GameTask{ db_name = "president",   cost = 100000000, reward = 10000000000, rewardInterval = 365, repeating = true,  failRate = 0.5}
         };
