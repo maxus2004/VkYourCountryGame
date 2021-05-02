@@ -266,7 +266,7 @@ namespace VkYourCountryGameBackend
 
                 await sqlConnection.OpenAsync();
 
-                JObject leaders = new JObject();
+                JArray leaders = new JArray();
 
                 DbDataReader getLeadersSql = await new MySqlCommand(
                     "SELECT * FROM `user` ORDER BY money DESC",
@@ -278,13 +278,12 @@ namespace VkYourCountryGameBackend
                     {
                         break;
                     }
-
-                    leaders[i] = new JObject
+                    leaders.Add(new JObject
                     {
                         { "id", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
                         { "money", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
                         { "slaves", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
-                    };
+                    });
                 }
 
                 await sqlConnection.CloseAsync();
