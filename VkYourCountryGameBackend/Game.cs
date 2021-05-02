@@ -131,7 +131,7 @@ namespace VkYourCountryGameBackend
                 playerData.days = getUserSql.GetInt32(getUserSql.GetOrdinal("days"));
                 await getUserSql.CloseAsync();
                 playerData.slaves = (int)((long?) await new MySqlCommand(
-                    $"SELECT COUNT(*) FROM user WHERE owner_id = '{userId}'",
+                    $"SELECT slaves FROM slave_count WHERE user_id = '{userId}'",
                     sqlConnection).ExecuteScalarAsync() ?? 0);
                 if (playerData.money < tasks[taskId].cost)
                 {
@@ -272,20 +272,36 @@ namespace VkYourCountryGameBackend
                     "SELECT * FROM `user` ORDER BY money DESC",
                     sqlConnection).ExecuteReaderAsync();
 
+                string ids = "";
+
                 for (int i = 0; i < 20; i++)
                 {
                     if (await getLeadersSql.ReadAsync() == false)
                     {
                         break;
                     }
+
+                    int id = getLeadersSql.GetInt32(getLeadersSql.GetOrdinal("id"));
+                    ids += id + ",";
                     leaders.Add(new JObject
                     {
                         { "id", getLeadersSql.GetInt32(getLeadersSql.GetOrdinal("id")) },
                         { "money", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
-                        { "slaves", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
                         { "days", getLeadersSql.GetInt32(getLeadersSql.GetOrdinal("days")) },
+                        { "slaves", 0 },
                     });
                 }
+                await getLeadersSql.CloseAsync();
+
+                DbDataReader getSlaveCount = await new MySqlCommand(
+                    $"SELECT * FROM slave_count WHERE user_id IN ({ids.TrimEnd(',')})",
+                    sqlConnection).ExecuteReaderAsync();
+                while (await getSlaveCount.ReadAsync())
+                {
+                    int id  = getLeadersSql.GetInt32(getLeadersSql.GetOrdinal("user_id"));
+                    leaders[id]["slaves"] = getLeadersSql.GetInt32(getLeadersSql.GetOrdinal("slaves"));
+                }
+                await getSlaveCount.CloseAsync();
 
                 await sqlConnection.CloseAsync();
 
@@ -330,7 +346,7 @@ namespace VkYourCountryGameBackend
                 playerData.days = getUserSql.GetInt32(getUserSql.GetOrdinal("days"));
                 await getUserSql.CloseAsync();
                 playerData.slaves = (int)((long?)await new MySqlCommand(
-                    $"SELECT COUNT(*) FROM user WHERE owner_id = '{userId}'",
+                    $"SELECT slaves FROM slave_count WHERE user_id = '{userId}'",
                     sqlConnection).ExecuteScalarAsync() ?? 0);
 
                 if (playerData.owner == null)
@@ -450,7 +466,7 @@ namespace VkYourCountryGameBackend
                     userJson.Add("days", getUserSql.GetInt32(getUserSql.GetOrdinal("days")));
                     await getUserSql.CloseAsync();
                     userJson.Add("slaves", (long?)await new MySqlCommand(
-                        $"SELECT COUNT(*) FROM user WHERE owner_id = '{userId}'",
+                        $"SELECT slaves FROM slave_count WHERE user_id = '{userId}'",
                         sqlConnection).ExecuteScalarAsync());
                 }
                 else
