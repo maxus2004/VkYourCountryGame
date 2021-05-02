@@ -298,8 +298,8 @@ namespace VkYourCountryGameBackend
                     sqlConnection).ExecuteReaderAsync();
                 while (await getSlaveCount.ReadAsync())
                 {
-                    int id  = getLeadersSql.GetInt32(getLeadersSql.GetOrdinal("user_id"));
-                    leaders[id]["slaves"] = getLeadersSql.GetInt32(getLeadersSql.GetOrdinal("slaves"));
+                    int id  = getSlaveCount.GetInt32(getSlaveCount.GetOrdinal("user_id"));
+                    leaders[id]["slaves"] = getSlaveCount.GetInt32(getSlaveCount.GetOrdinal("slaves"));
                 }
                 await getSlaveCount.CloseAsync();
 
