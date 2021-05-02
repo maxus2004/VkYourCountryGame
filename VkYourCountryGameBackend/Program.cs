@@ -127,6 +127,9 @@ namespace VkYourCountryGameBackend
                             case "/yourcountryserver/becomeSlave":
                                 Task.Run(() => Game.ProcessBecomeSlave(context, new MySqlConnection(sqlConnectStr)));
                                 break;
+                            case "/yourcountryserver/getLeaders":
+                                Task.Run(() => Game.ProcessGetLeaders(context, new MySqlConnection(sqlConnectStr)));
+                                break;
                             default:
                                 Task.Run(() => Send404(context));
                                 break;

@@ -254,6 +254,47 @@ namespace VkYourCountryGameBackend
             }
         }
 
+        public static async Task ProcessGetLeaders(HttpListenerContext context, MySqlConnection sqlConnection)
+        {
+            try
+            {
+                if (!int.TryParse(context.Request.QueryString["vk_user_id"], out int userId))
+                {
+                    await Program.SendError(context, "invalid user id");
+                    return;
+                }
+
+                await sqlConnection.OpenAsync();
+
+                JObject leaders = new JObject();
+
+                DbDataReader getLeadersSql = await new MySqlCommand(
+                    "SELECT * FROM `user` ORDER BY money DESC",
+                    sqlConnection).ExecuteReaderAsync();
+
+                for (int i = 0; i < 20; i++)
+                {
+                    leaders[i] = new JObject
+                    {
+                        { "id", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
+                        { "money", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
+                        { "money", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
+                    };
+                }
+
+                await sqlConnection.CloseAsync();
+
+                await Program.SendJson(context, leaders);
+                Program.Log($"served getLeaders for id{userId}");
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e);
+                context.Response.OutputStream.Close();
+                await sqlConnection.CloseAsync();
+            }
+        }
+
         public static async Task ProcessGetFree(HttpListenerContext context, MySqlConnection sqlConnection)
         {
             try
