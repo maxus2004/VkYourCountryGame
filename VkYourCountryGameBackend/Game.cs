@@ -280,9 +280,10 @@ namespace VkYourCountryGameBackend
                     }
                     leaders.Add(new JObject
                     {
-                        { "id", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
+                        { "id", getLeadersSql.GetInt32(getLeadersSql.GetOrdinal("id")) },
                         { "money", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
                         { "slaves", getLeadersSql.GetInt64(getLeadersSql.GetOrdinal("money")) },
+                        { "days", getLeadersSql.GetInt32(getLeadersSql.GetOrdinal("days")) },
                     });
                 }
 
